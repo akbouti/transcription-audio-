@@ -192,13 +192,13 @@
     <div class="card-label">Modèle Whisper</div>
     <div class="model-grid" id="modelGrid">
       <label class="model-opt selected">
-        <input type="radio" name="model" value="Xenova/whisper-small" checked />
+        <input type="radio" name="model" value="onnx-community/whisper-small" checked />
         <div class="model-name">Small</div>
         <div class="model-desc">Bon équilibre</div>
         <div class="model-size">↓ 250 MB</div>
       </label>
       <label class="model-opt">
-        <input type="radio" name="model" value="Xenova/whisper-medium" />
+        <input type="radio" name="model" value="onnx-community/whisper-medium-ONNX" />
         <div class="model-name">Medium</div>
         <div class="model-desc">Meilleure qualité</div>
         <div class="model-size">↓ 770 MB</div>
@@ -264,11 +264,14 @@
 </div>
 
 <script type="module">
-import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/transformers.min.js';
+import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3';
 
 // Utiliser le cache du navigateur
 env.allowLocalModels = false;
 env.useBrowserCache  = true;
+
+// Détection WebGPU
+const hasWebGPU = typeof navigator !== 'undefined' && 'gpu' in navigator;
 
 const $ = id => document.getElementById(id);
 const drop = $('drop'), fi = $('fi'), finfo = $('finfo');
@@ -381,10 +384,14 @@ btnStart.addEventListener('click', async () => {
 
   try {
     const model = getModel();
-    setProg(5, 'Chargement du modèle Whisper…', 'Premier chargement : quelques minutes selon votre connexion');
+    setProg(5, 'Chargement du modèle Whisper…',
+      (hasWebGPU ? 'Accélération WebGPU active · ' : 'Mode CPU (WebGPU indisponible) · ') +
+      'Premier chargement : quelques minutes selon votre connexion');
 
     // Charger le pipeline avec callback de progression
     const transcriber = await pipeline('automatic-speech-recognition', model, {
+      device: hasWebGPU ? 'webgpu' : 'wasm',
+      dtype: hasWebGPU ? { encoder_model: 'fp32', decoder_model_merged: 'q4' } : 'q8',
       progress_callback: (p) => {
         if (p.status === 'downloading') {
           const pct = p.total ? Math.round((p.loaded / p.total) * 30) : 0;
