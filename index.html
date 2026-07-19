@@ -403,16 +403,57 @@ btnStart.addEventListener('click', async () => {
     const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
     const float32 = audioBuffer.getChannelData(0);
 
-    setProg(55, 'Whisper transcrit l\'audio…', 'Détection automatique arabe / français');
+    setProg(55, 'Passe arabe en cours…', 'Whisper transcrit l\'audio en arabe');
 
     // Transcription avec détection de langue automatique par chunk
-    const result = await transcriber(float32, {
+    // On transcrit deux fois : une passe arabe, une passe française
+    // puis on fusionne intelligemment selon la détection de caractères
+    const resultAr = await transcriber(float32, {
       task: 'transcribe',
-      language: null,          // détection automatique
-      chunk_length_s: 30,      // traiter par blocs de 30 secondes
+      language: 'arabic',
+      chunk_length_s: 30,
       stride_length_s: 5,
       return_timestamps: true,
     });
+
+    setProg(75, 'Passe française en cours…', '');
+
+    const resultFr = await transcriber(float32, {
+      task: 'transcribe',
+      language: 'french',
+      chunk_length_s: 30,
+      stride_length_s: 5,
+      return_timestamps: true,
+    });
+
+    // Fusionner les deux passes chunk par chunk
+    // Pour chaque chunk, on garde celui dont la langue détectée est la plus probable
+    const chunksAr = resultAr.chunks || [];
+    const chunksFr = resultFr.chunks || [];
+
+    // Construire une liste unifiée en comparant chunk par chunk
+    const allChunks = [];
+    const maxLen = Math.max(chunksAr.length, chunksFr.length);
+    for (let i = 0; i < maxLen; i++) {
+      const ar = chunksAr[i];
+      const fr = chunksFr[i];
+      if (ar && fr) {
+        // Choisir selon la proportion de caractères arabes dans le chunk arabe
+        const arText = ar.text || '';
+        const arabicRatio = (arText.match(/[\u0600-\u06FF]/g) || []).length / Math.max(arText.length, 1);
+        if (arabicRatio > 0.15) {
+          allChunks.push({ text: arText, timestamp: ar.timestamp });
+        } else {
+          allChunks.push({ text: fr.text || '', timestamp: fr.timestamp });
+        }
+      } else if (ar) {
+        allChunks.push(ar);
+      } else if (fr) {
+        allChunks.push(fr);
+      }
+    }
+
+    const result = { chunks: allChunks };
 
     setProg(90, 'Mise en forme…', '');
 
