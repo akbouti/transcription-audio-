@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transcription Audio — Arabe / Français</title>
+<style>
+  :root {
+    --bg: #f5f4f1;
+    --surface: #ffffff;
+    --surface2: #faf9f7;
+    --border: #e4e2dc;
+    --border-strong: #ccc9c0;
+    --text: #18180f;
+    --text2: #5a5850;
+    --text3: #9a9890;
+    --accent: #0f62a8;
+    --accent-bg: #eef5fc;
+    --accent-border: #b8d4ef;
+    --ar-bg: #f5f0ff;
+    --ar-border: #ddd0f7;
+    --ar-text: #5b21b6;
+    --fr-bg: #f0fdf4;
+    --fr-border: #bbf7d0;
+    --fr-text: #166534;
+    --danger: #b91c1c;
+    --danger-bg: #fef2f2;
+    --danger-border: #fecaca;
+    --radius: 10px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2.5rem 1rem 3rem;
+    line-height: 1.6;
+  }
+  .page { max-width: 700px; margin: 0 auto; }
+
+  .header { margin-bottom: 2rem; }
+  .header h1 { font-size: 1.35rem; font-weight: 600; letter-spacing: -0.02em; }
+  .header p { font-size: 0.85rem; color: var(--text2); margin-top: 3px; }
+
+  .badge-free {
+    display: inline-block; font-size: 0.7rem; font-weight: 600;
+    background: var(--fr-bg); color: var(--fr-text);
+    border: 1px solid var(--fr-border); border-radius: 20px;
+    padding: 2px 10px; margin-left: 8px; vertical-align: middle;
+  }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.2rem 1.35rem; margin-bottom: 0.85rem;
+  }
+  .card-label {
+    font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--text3); margin-bottom: 9px;
+  }
+
+  /* Modèle selector */
+  .model-grid { display: flex; gap: 8px; flex-wrap: wrap; }
+  .model-opt {
+    flex: 1; min-width: 120px; border: 1.5px solid var(--border-strong);
+    border-radius: 8px; padding: 10px 12px; cursor: pointer;
+    background: var(--surface2); transition: border-color .15s, background .15s;
+    text-align: center;
+  }
+  .model-opt:hover { border-color: var(--accent); background: var(--accent-bg); }
+  .model-opt.selected { border-color: var(--accent); background: var(--accent-bg); }
+  .model-opt input { display: none; }
+  .model-name { font-size: 0.875rem; font-weight: 600; color: var(--text); }
+  .model-desc { font-size: 0.72rem; color: var(--text3); margin-top: 2px; }
+  .model-size { font-size: 0.7rem; color: var(--accent); margin-top: 3px; font-weight: 500; }
+
+  /* Drop zone */
+  .drop {
+    border: 1.5px dashed var(--border-strong); border-radius: var(--radius);
+    padding: 2.2rem 1rem; text-align: center; cursor: pointer;
+    background: var(--surface2); transition: background .15s, border-color .15s;
+  }
+  .drop:hover, .drop.over { background: var(--accent-bg); border-color: var(--accent); }
+  .drop-ico { font-size: 2rem; margin-bottom: 7px; }
+  .drop-main { font-size: 0.875rem; color: var(--text2); font-weight: 500; }
+  .drop-sub { font-size: 0.78rem; color: var(--text3); margin-top: 3px; }
+
+  .file-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; margin-top: 9px;
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+  }
+  .file-ico { font-size: 1.2rem; flex-shrink: 0; }
+  .file-meta { flex: 1; min-width: 0; }
+  .file-name { font-size: 0.875rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .file-size { font-size: 0.75rem; color: var(--text3); }
+  .btn-rm {
+    background: none; border: none; cursor: pointer; color: var(--text3);
+    padding: 3px 5px; border-radius: 5px; font-size: 1rem; line-height: 1;
+    transition: color .15s, background .15s;
+  }
+  .btn-rm:hover { color: var(--danger); background: var(--danger-bg); }
+
+  .actions { display: flex; gap: 8px; margin-bottom: 0.85rem; flex-wrap: wrap; }
+  .btn-primary {
+    background: var(--accent); color: #fff; border: none;
+    border-radius: 8px; padding: 10px 20px;
+    font-size: 0.875rem; font-weight: 500; cursor: pointer;
+    display: flex; align-items: center; gap: 7px;
+    font-family: inherit; transition: background .15s, opacity .15s;
+  }
+  .btn-primary:hover { background: #0a4f8a; }
+  .btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-ghost {
+    background: var(--surface); color: var(--text2);
+    border: 1px solid var(--border-strong); border-radius: 8px;
+    padding: 9px 14px; font-size: 0.8125rem; cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    font-family: inherit; transition: background .15s;
+  }
+  .btn-ghost:hover { background: var(--surface2); }
+
+  /* Progress */
+  .progress { display: none; margin-bottom: 0.85rem; }
+  .prog-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 0.8rem; color: var(--text2); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: blink 1.3s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.15} }
+  .prog-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .prog-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width .4s ease; }
+  .prog-sub { font-size: 0.72rem; color: var(--text3); margin-top: 4px; }
+
+  .error {
+    display: none; background: var(--danger-bg); color: var(--danger);
+    border: 1px solid var(--danger-border); border-radius: 8px;
+    padding: 10px 14px; font-size: 0.8125rem; margin-bottom: 0.85rem; line-height: 1.55;
+    white-space: pre-wrap;
+  }
+
+  /* Output */
+  .out-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .out-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.65rem 1.2rem; border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  .out-actions { display: flex; gap: 6px; }
+  .out-body {
+    padding: 1rem 1.2rem;
+    min-height: 220px; max-height: 500px; overflow-y: auto;
+    font-size: 0.9rem; line-height: 1.8;
+  }
+  .placeholder { color: var(--text3); font-size: 0.85rem; }
+
+  .blk-ar {
+    direction: rtl; text-align: right;
+    background: var(--ar-bg); border: 1px solid var(--ar-border);
+    border-radius: 8px; padding: 10px 14px; margin: 7px 0;
+    font-size: 1rem; line-height: 2;
+  }
+  .blk-fr {
+    direction: ltr; text-align: left;
+    background: var(--fr-bg); border: 1px solid var(--fr-border);
+    border-left: 3px solid #4ade80;
+    border-radius: 8px; padding: 10px 14px; margin: 7px 0;
+  }
+  .badge {
+    display: inline-block; font-size: 0.65rem; font-weight: 700;
+    padding: 2px 8px; border-radius: 4px; margin-bottom: 5px;
+    letter-spacing: .05em; text-transform: uppercase;
+  }
+  .badge-ar { background: var(--ar-border); color: var(--ar-text); }
+  .badge-fr { background: var(--fr-border); color: var(--fr-text); }
+
+  .footer { text-align: center; font-size: 0.73rem; color: var(--text3); margin-top: 1.2rem; }
+
+  @media (max-width: 480px) {
+    body { padding: 1.2rem .75rem 2rem; }
+    .model-grid { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <h1>🎙️ Transcription audio <span class="badge-free">100% gratuit</span></h1>
+    <p>Arabe / Français — Whisper IA · détection automatique · aucun compte requis</p>
+  </div>
+
+  <!-- Choix du modèle -->
+  <div class="card">
+    <div class="card-label">Modèle Whisper</div>
+    <div class="model-grid" id="modelGrid">
+      <label class="model-opt selected">
+        <input type="radio" name="model" value="Xenova/whisper-small" checked />
+        <div class="model-name">Small</div>
+        <div class="model-desc">Bon équilibre</div>
+        <div class="model-size">↓ 250 MB</div>
+      </label>
+      <label class="model-opt">
+        <input type="radio" name="model" value="Xenova/whisper-medium" />
+        <div class="model-name">Medium</div>
+        <div class="model-desc">Meilleure qualité</div>
+        <div class="model-size">↓ 770 MB</div>
+      </label>
+      <label class="model-opt">
+        <input type="radio" name="model" value="Xenova/whisper-large-v3" />
+        <div class="model-name">Large v3</div>
+        <div class="model-desc">Qualité maximale</div>
+        <div class="model-size">↓ 1.5 GB</div>
+      </label>
+    </div>
+    <p style="font-size:0.75rem;color:var(--text3);margin-top:10px;">
+      ⓘ Le modèle est téléchargé une seule fois puis mis en cache dans votre navigateur.
+    </p>
+  </div>
+
+  <!-- Fichier audio -->
+  <div class="card">
+    <div class="card-label">Fichier audio</div>
+    <div class="drop" id="drop" onclick="document.getElementById('fi').click()">
+      <div class="drop-ico">🎵</div>
+      <div class="drop-main">Glisse un fichier ici ou clique pour choisir</div>
+      <div class="drop-sub">MP3 · WAV · M4A · OGG · jusqu'à 50 MB</div>
+    </div>
+    <input type="file" id="fi" accept="audio/*" style="display:none" />
+    <div id="finfo" style="display:none"></div>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions">
+    <button class="btn-primary" id="btnStart" disabled>▶ Transcrire</button>
+    <button class="btn-ghost" id="btnClr" style="display:none">🗑 Effacer</button>
+  </div>
+
+  <!-- Progression -->
+  <div class="progress" id="prog">
+    <div class="prog-top"><div class="dot"></div><span id="progLbl">Chargement…</span></div>
+    <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+    <div class="prog-sub" id="progSub"></div>
+  </div>
+
+  <!-- Erreur -->
+  <div class="error" id="errBox"></div>
+
+  <!-- Résultat -->
+  <div class="out-card">
+    <div class="out-header">
+      <div class="card-label" style="margin:0">Transcription</div>
+      <div class="out-actions">
+        <button class="btn-ghost" id="btnCopy" style="display:none">📋 Copier</button>
+        <button class="btn-ghost" id="btnDl" style="display:none">⬇ .txt</button>
+      </div>
+    </div>
+    <div class="out-body" id="outBody">
+      <span class="placeholder">La transcription apparaîtra ici une fois le fichier traité.</span>
+    </div>
+  </div>
+
+  <div class="footer">
+    Traitement 100% local — l'audio ne quitte jamais votre appareil · Propulsé par OpenAI Whisper via Transformers.js
+  </div>
+
+</div>
+
+<script type="module">
+import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/transformers.min.js';
+
+// Utiliser le cache du navigateur
+env.allowLocalModels = false;
+env.useBrowserCache  = true;
+
+const $ = id => document.getElementById(id);
+const drop = $('drop'), fi = $('fi'), finfo = $('finfo');
+const btnStart = $('btnStart'), btnClr = $('btnClr');
+const btnCopy = $('btnCopy'), btnDl = $('btnDl');
+const prog = $('prog'), progLbl = $('progLbl'), progFill = $('progFill'), progSub = $('progSub');
+const outBody = $('outBody'), errBox = $('errBox');
+
+let audioFile = null, txText = '', segments = [];
+
+// Sélection du modèle
+document.querySelectorAll('.model-opt').forEach(opt => {
+  opt.addEventListener('click', () => {
+    document.querySelectorAll('.model-opt').forEach(o => o.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+
+function getModel() {
+  return document.querySelector('input[name="model"]:checked').value;
+}
+
+// Drag & drop
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+drop.addEventListener('drop', e => {
+  e.preventDefault(); drop.classList.remove('over');
+  if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
+});
+fi.addEventListener('change', e => { if (e.target.files[0]) setFile(e.target.files[0]); });
+
+function setFile(f) {
+  audioFile = f;
+  const mb = (f.size / 1024 / 1024).toFixed(1);
+  finfo.innerHTML = `<div class="file-row">
+    <span class="file-ico">🎵</span>
+    <div class="file-meta">
+      <div class="file-name">${f.name}</div>
+      <div class="file-size">${mb} MB</div>
+    </div>
+    <button class="btn-rm" id="btnRm">✕</button>
+  </div>`;
+  finfo.style.display = 'block';
+  drop.style.display = 'none';
+  $('btnRm').addEventListener('click', resetFile);
+  btnStart.disabled = false;
+}
+
+function resetFile() {
+  audioFile = null; fi.value = '';
+  finfo.style.display = 'none'; finfo.innerHTML = '';
+  drop.style.display = 'block';
+  btnStart.disabled = true;
+}
+
+function setProg(pct, lbl, sub = '') {
+  progFill.style.width = pct + '%';
+  progLbl.textContent = lbl;
+  progSub.textContent = sub;
+}
+
+function showErr(msg) {
+  errBox.textContent = msg; errBox.style.display = 'block';
+  prog.style.display = 'none'; btnStart.disabled = false;
+}
+
+function isArabic(text) {
+  const ar = (text.match(/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/g) || []).length;
+  return text.length > 0 && ar / text.length > 0.2;
+}
+
+function buildSegments(chunks) {
+  const segs = [];
+  for (const chunk of chunks) {
+    const text = chunk.text.trim();
+    if (!text) continue;
+    const lang = isArabic(text) ? 'ar' : 'fr';
+    if (segs.length > 0 && segs[segs.length - 1].lang === lang) {
+      segs[segs.length - 1].text += ' ' + text;
+    } else {
+      segs.push({ lang, text });
+    }
+  }
+  return segs;
+}
+
+function renderSegments(segs) {
+  if (!segs.length) return;
+  let html = '';
+  for (const seg of segs) {
+    if (seg.lang === 'ar') {
+      html += `<div class="blk-ar"><span class="badge badge-ar">عربي · Arabe</span><br>${seg.text}</div>`;
+    } else {
+      html += `<div class="blk-fr"><span class="badge badge-fr">Français</span><br>${seg.text}</div>`;
+    }
+  }
+  outBody.innerHTML = html;
+  txText = segs.map(s => (s.lang === 'ar' ? '[ARABE]\n' : '[FRANÇAIS]\n') + s.text).join('\n\n');
+}
+
+btnStart.addEventListener('click', async () => {
+  if (!audioFile) return;
+
+  errBox.style.display = 'none';
+  segments = []; txText = '';
+  outBody.innerHTML = '<span class="placeholder">Traitement en cours…</span>';
+  prog.style.display = 'block';
+  btnStart.disabled = true;
+  btnCopy.style.display = btnDl.style.display = btnClr.style.display = 'none';
+
+  try {
+    const model = getModel();
+    setProg(5, 'Chargement du modèle Whisper…', 'Premier chargement : quelques minutes selon votre connexion');
+
+    // Charger le pipeline avec callback de progression
+    const transcriber = await pipeline('automatic-speech-recognition', model, {
+      progress_callback: (p) => {
+        if (p.status === 'downloading') {
+          const pct = p.total ? Math.round((p.loaded / p.total) * 30) : 0;
+          setProg(5 + pct, `Téléchargement du modèle…`, `${p.file || ''} — ${p.total ? Math.round(p.loaded/1024/1024) + ' / ' + Math.round(p.total/1024/1024) + ' MB' : ''}`);
+        } else if (p.status === 'loading') {
+          setProg(35, 'Chargement en mémoire…', '');
+        }
+      }
+    });
+
+    setProg(40, 'Lecture du fichier audio…', '');
+
+    // Décoder l'audio via AudioContext
+    const arrayBuffer = await audioFile.arrayBuffer();
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+    const float32 = audioBuffer.getChannelData(0);
+
+    setProg(55, 'Whisper transcrit l\'audio…', 'Détection automatique arabe / français');
+
+    // Transcription avec détection de langue automatique par chunk
+    const result = await transcriber(float32, {
+      task: 'transcribe',
+      language: null,          // détection automatique
+      chunk_length_s: 30,      // traiter par blocs de 30 secondes
+      stride_length_s: 5,
+      return_timestamps: true,
+    });
+
+    setProg(90, 'Mise en forme…', '');
+
+    const chunks = result.chunks || [{ text: result.text }];
+    segments = buildSegments(chunks);
+
+    if (!segments.length) {
+      outBody.innerHTML = '<span class="placeholder">Aucun texte détecté. Vérifiez le fichier audio.</span>';
+    } else {
+      renderSegments(segments);
+      btnCopy.style.display = btnDl.style.display = btnClr.style.display = 'flex';
+    }
+
+    setProg(100, 'Terminé ✓', '');
+    setTimeout(() => { prog.style.display = 'none'; }, 1000);
+    btnStart.disabled = false;
+
+  } catch(e) {
+    showErr('Erreur : ' + (e.message || e));
+    console.error(e);
+  }
+});
+
+btnClr.addEventListener('click', () => {
+  segments = []; txText = '';
+  outBody.innerHTML = '<span class="placeholder">La transcription apparaîtra ici une fois le fichier traité.</span>';
+  btnCopy.style.display = btnDl.style.display = btnClr.style.display = 'none';
+  errBox.style.display = 'none';
+});
+
+btnCopy.addEventListener('click', () => {
+  navigator.clipboard.writeText(txText).then(() => {
+    btnCopy.textContent = '✓ Copié';
+    setTimeout(() => { btnCopy.textContent = '📋 Copier'; }, 2000);
+  });
+});
+
+btnDl.addEventListener('click', () => {
+  const blob = new Blob([txText], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (audioFile?.name || 'transcription').replace(/\.[^.]+$/, '') + '_transcription.txt';
+  a.click();
+});
+</script>
+</body>
+</html>
